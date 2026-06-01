@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <title>{{ config('app.name', 'BeatHub') }} - Online Beat Selling Platform</title>
 
     <!-- Bootstrap 5 -->
@@ -297,6 +301,91 @@
                 display: none;
             }
         }
+
+        /* Hide download button from audio player */
+        audio::-webkit-media-controls-download-button {
+            display: none !important;
+        }
+
+        audio::-webkit-media-controls-enclosure {
+            overflow: hidden;
+        }
+
+        audio::-internal-media-controls-download-button {
+            display: none !important;
+        }
+
+        /* Table styling */
+        .table-dark {
+            background-color: #111;
+            border-color: #333;
+        }
+
+        .table-dark th {
+            border-bottom-color: #e63946;
+            color: #e63946;
+            font-weight: 600;
+        }
+
+        .table-dark td {
+            border-color: #222;
+            vertical-align: middle;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #1a1a1a;
+        }
+
+        /* Badge styling */
+        .badge {
+            padding: 5px 10px;
+            font-weight: 500;
+        }
+
+        .bg-success {
+            background-color: #28a745 !important;
+        }
+
+        .bg-info {
+            background-color: #17a2b8 !important;
+        }
+
+        .bg-warning {
+            background-color: #ffc107 !important;
+            color: #000;
+        }
+
+        .bg-danger {
+            background-color: #dc3545 !important;
+        }
+
+        /* Modal styling */
+        .modal-content {
+            background: #1a1a1a;
+            border: 1px solid #333;
+        }
+
+        .modal-header {
+            border-bottom-color: #333;
+        }
+
+        .modal-footer {
+            border-top-color: #333;
+        }
+
+        .btn-close-white {
+            filter: invert(1);
+        }
+
+        /* Smooth scrolling for the whole page */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Optional: Add some padding for better scroll position */
+        .beats-section {
+            scroll-margin-top: 80px;
+        }
     </style>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -351,12 +440,21 @@
                 <a class="icon-link position-relative" href="{{ route('cart.index') }}">
                     <i class="fas fa-shopping-cart fa-lg"></i>
                     <span class="hover-text">Cart</span>
+                    @auth
+                    @php
+                    $cartCount = App\Models\Cart::where('user_id', auth()->id())->sum('quantity');
+                    @endphp
+                    @if($cartCount > 0)
+                    <span class="cart-badge">{{ $cartCount }}</span>
+                    @endif
+                    @else
                     @php
                     $cartCount = count(session()->get('cart', []));
                     @endphp
                     @if($cartCount > 0)
                     <span class="cart-badge">{{ $cartCount }}</span>
                     @endif
+                    @endauth
                 </a>
 
                 <!-- User Menu -->
@@ -444,9 +542,9 @@
                 </div>
                 <div class="col-md-4">
                     <h5>Follow Us</h5>
-                    <a href="#" class="text-muted me-3"><i class="fab fa-facebook fa-lg"></i></a>
-                    <a href="#" class="text-muted me-3"><i class="fab fa-twitter fa-lg"></i></a>
-                    <a href="#" class="text-muted me-3"><i class="fab fa-instagram fa-lg"></i></a>
+                    <a href="https://www.facebook.com/Anmol.Giri.999/" class="text-muted me-3"><i class="fab fa-facebook fa-lg"></i></a>
+                    <a href="https://x.com/Anmol46020639" class="text-muted me-3"><i class="fab fa-x fa-lg"></i></a>
+                    <a href="https://www.instagram.com/iamanmol428/" class="text-muted me-3"><i class="fab fa-instagram fa-lg"></i></a>
                 </div>
             </div>
             <hr class="border-secondary">
@@ -477,6 +575,7 @@
     </script>
     <!-- Music Player JavaScript -->
     <script src="{{ asset('js/music-player.js') }}"></script>
+
 </body>
 
 </html>

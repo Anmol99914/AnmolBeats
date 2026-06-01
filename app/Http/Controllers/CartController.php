@@ -18,7 +18,7 @@ class CartController extends Controller
         $cartItems = Cart::where('user_id', Auth::id())->with('beat')->get();
         $total = 0;
         foreach ($cartItems as $item) {
-            $total += $item->beat->price * $item->quantity;
+            $total += $item->beat->price;
         }
         
         return view('cart.index', compact('cartItems', 'total'));
@@ -26,30 +26,18 @@ class CartController extends Controller
     
     public function add(Request $request, Beat $beat)
     {
-        // If not logged in, save to session and redirect to login
         if (!Auth::check()) {
-            // Store the beat in session
-            $pendingCart = session()->get('pending_cart', []);
-            $pendingCart[$beat->id] = [
-                'id' => $beat->id,
-                'title' => $beat->title,
-                'price' => $beat->price,
-                'quantity' => 1,
-                'image' => $beat->image
-            ];
-            session()->put('pending_cart', $pendingCart);
-            
-            return redirect()->route('login')->with('error', 'Please login to add items to cart. Your item has been saved!');
+            session()->put('pending_cart_item', $beat->id);
+            return redirect()->route('login')->with('error', 'Please login to add items to cart.');
         }
         
-        // User is logged in - add to database cart
+        // Check if item already in cart - digital products only need 1 quantity
         $cartItem = Cart::where('user_id', Auth::id())
                         ->where('beat_id', $beat->id)
                         ->first();
         
         if ($cartItem) {
-            $cartItem->quantity++;
-            $cartItem->save();
+            return redirect()->back()->with('error', 'This beat is already in your cart!');
         } else {
             Cart::create([
                 'user_id' => Auth::id(),
@@ -76,19 +64,8 @@ class CartController extends Controller
     
     public function update(Request $request, int $id)
     {
-        if (!Auth::check()) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-        
-        $cartItem = Cart::where('user_id', Auth::id())
-                        ->where('beat_id', $id)
-                        ->first();
-        
-        if ($cartItem) {
-            $cartItem->quantity = $request->quantity;
-            $cartItem->save();
-        }
-        
+        // For digital products, we don't need quantity updates
+        // This method is kept for compatibility but doesn't do anything
         return response()->json(['success' => true]);
     }
 }

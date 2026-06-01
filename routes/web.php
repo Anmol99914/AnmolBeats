@@ -31,6 +31,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
     Route::get('/orders', [OrderController::class, 'history'])->name('orders.history');
     Route::get('/order/{order}/confirmation', [OrderController::class, 'confirmation'])->name('order.confirmation');
+    Route::get('/checkout/stripe', [CheckoutController::class, 'stripe'])->name('checkout.stripe');
+    Route::post('/checkout/stripe/process', [CheckoutController::class, 'stripeProcess'])->name('checkout.stripe.process');
 });
 
 // Admin routes
@@ -46,5 +48,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 Route::get('/dashboard', function () {
     return redirect('/');
 })->name('dashboard');
+
+Route::get('/checkout/stripe/success', function () {
+    return redirect()->route('orders.history');
+})->name('checkout.stripe.success');
 
 require __DIR__.'/auth.php';

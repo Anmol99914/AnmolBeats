@@ -14,6 +14,11 @@
         <i class="fas fa-search"></i> Search results for: <strong>"{{ request('search') }}"</strong>
         <a href="{{ route('beats.index') }}" class="float-end text-decoration-none">Clear search</a>
     </div>
+    <div class="beats-section" id="beats-section">
+    <div class="row">
+        <!-- Your beats grid here -->
+    </div>
+</div>
     @endif
 
     <div class="row">
@@ -43,9 +48,8 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="audio-preview" style="background: #1a1a1a; padding: 10px;">
-                            <audio controls class="w-100" preload="none">
+                            <audio controls controlsList="nodownload" class="w-100">
                                 <source src="{{ Storage::url($beat->audio_file) }}" type="audio/mpeg">
-                                Your browser does not support the audio element.
                             </audio>
                         </div>
                         <div class="card-body">

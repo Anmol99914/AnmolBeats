@@ -2,6 +2,9 @@
     $featuredBeats = App\Models\Beat::with('category')->inRandomOrder()->limit(10)->get();
 @endphp
 
+<!-- Pass data through meta tag -->
+<meta id="playerBeatsData" content="{{ base64_encode(json_encode($featuredBeats)) }}">
+
 <div class="floating-player" id="floatingPlayer">
     <div class="player-container">
         <div class="player-controls">
@@ -179,6 +182,14 @@
         font-size: 24px;
     }
     
+    audio::-webkit-media-controls-download-button {
+        display: none !important;
+    }
+    
+    audio::-webkit-media-controls-enclosure {
+        overflow: hidden;
+    }
+    
     @media (max-width: 768px) {
         .player-container {
             flex-direction: column;
@@ -191,7 +202,3 @@
         }
     }
 </style>
-
-<script>
-    window.playerBeatsData = @json($featuredBeats);
-</script>

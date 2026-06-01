@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
+/**
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Order> $orders
+ */
 class User extends Authenticatable
 {
-    use HasFactory; 
+    use HasFactory;
+    
     protected $fillable = [
         'name', 'email', 'password', 'role',
     ];

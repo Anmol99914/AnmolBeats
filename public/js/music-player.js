@@ -1,5 +1,13 @@
 (function() {
-    var playerBeats = window.playerBeatsData || [];
+    var playerBeats = [];
+    var beatsMeta = document.getElementById('playerBeatsData');
+    if (beatsMeta) {
+        var beatsData = beatsMeta.getAttribute('content');
+        if (beatsData) {
+            playerBeats = JSON.parse(atob(beatsData));
+        }
+    }
+    
     var currentIndex = 0;
     var currentAudio = null;
     var isPlaying = false;
@@ -31,6 +39,9 @@
         
         var audioUrl = '/storage/' + beat.audio_file;
         currentAudio = new Audio(audioUrl);
+        if (currentAudio.setAttribute) {
+            currentAudio.setAttribute('controlsList', 'nodownload');
+        }
         addToCartBtn.innerHTML = 'Add to Cart $' + parseFloat(beat.price).toFixed(2);
         
         currentAudio.addEventListener('timeupdate', updateProgress);
@@ -100,19 +111,14 @@
     if (nextBtn) nextBtn.addEventListener('click', nextTrack);
     if (prevBtn) prevBtn.addEventListener('click', prevTrack);
     
-    // Fixed Add to Cart - redirects to login if not logged in
     if (addToCartBtn) {
         addToCartBtn.addEventListener('click', function() {
             var beatId = this.getAttribute('data-beat-id');
             if (beatId) {
-                // Check if user is logged in by trying to fetch
                 fetch('/check-auth')
-                    .then(function(res) {
-                        return res.json();
-                    })
+                    .then(function(res) { return res.json(); })
                     .then(function(data) {
                         if (data.logged_in) {
-                            // Logged in - add to cart
                             var form = document.createElement('form');
                             form.method = 'POST';
                             form.action = '/cart/add/' + beatId;
@@ -121,13 +127,10 @@
                             document.body.appendChild(form);
                             form.submit();
                         } else {
-                            // Not logged in - go to login
                             window.location.href = '/login';
                         }
                     })
-                    .catch(function() {
-                        window.location.href = '/login';
-                    });
+                    .catch(function() { window.location.href = '/login'; });
             }
         });
     }

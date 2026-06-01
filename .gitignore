@@ -32,4 +32,4 @@ database/*.sqlite
 /storage/logs/
 /storage/framework/
 package-lock.json
-composer.phar
+composer.phar*.zip

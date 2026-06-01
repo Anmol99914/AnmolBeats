@@ -14,8 +14,16 @@ class DashboardController extends Controller
         $totalUsers = User::count();
         $totalBeats = Beat::count();
         $totalOrders = Order::count();
+        
+        // Calculate revenue: Only paid orders, exclude refunded
         $totalRevenue = Order::where('payment_status', 'paid')->sum('total_amount');
         
-        return view('admin.dashboard', compact('totalUsers', 'totalBeats', 'totalOrders', 'totalRevenue'));
+        // Get refunded amount for display
+        $refundedAmount = Order::where('payment_status', 'refunded')->sum('total_amount');
+        
+        // Net revenue = paid - refunded
+        $netRevenue = $totalRevenue;
+        
+        return view('admin.dashboard', compact('totalUsers', 'totalBeats', 'totalOrders', 'totalRevenue', 'refundedAmount', 'netRevenue'));
     }
 }
