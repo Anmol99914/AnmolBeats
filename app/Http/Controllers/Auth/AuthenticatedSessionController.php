@@ -25,43 +25,39 @@ class AuthenticatedSessionController extends Controller
      * Handle an incoming authentication request.
      */
     public function store(LoginRequest $request): RedirectResponse
-    {
-        $request->authenticate();
+{
+    $request->authenticate();
 
-        $request->session()->regenerate();
+    $request->session()->regenerate();
 
-        // Merge pending cart items from session into database
-        if (session()->has('pending_cart')) {
-            $pendingCart = session()->get('pending_cart', []);
+    // Check for pending cart item (singular)
+    if (session()->has('pending_cart_item')) {
+        $beatId = session()->get('pending_cart_item');
+        $beat = Beat::find($beatId);
+        
+        if ($beat) {
+            $cartItem = Cart::where('user_id', Auth::id())
+                            ->where('beat_id', $beat->id)
+                            ->first();
             
-            foreach ($pendingCart as $item) {
-                $beat = Beat::find($item['id']);
-                if ($beat) {
-                    $cartItem = Cart::where('user_id', Auth::id())
-                                    ->where('beat_id', $beat->id)
-                                    ->first();
-                    
-                    if ($cartItem) {
-                        $cartItem->quantity += $item['quantity'];
-                        $cartItem->save();
-                    } else {
-                        Cart::create([
-                            'user_id' => Auth::id(),
-                            'beat_id' => $beat->id,
-                            'quantity' => $item['quantity']
-                        ]);
-                    }
-                }
+            if ($cartItem) {
+                // Already in cart, just keep it (no quantity increment for digital)
+                // Do nothing or redirect as needed
+            } else {
+                Cart::create([
+                    'user_id' => Auth::id(),
+                    'beat_id' => $beat->id,
+                    'quantity' => 1
+                ]);
             }
-            
-            // Clear the pending cart from session
-            session()->forget('pending_cart');
         }
-
-        // return redirect()->intended('/cart');
-        return redirect()->intended('/');
-
+        
+        // Clear the pending cart item
+        session()->forget('pending_cart_item');
     }
+
+    return redirect()->intended('/');
+}
 
     /**
      * Destroy an authenticated session.

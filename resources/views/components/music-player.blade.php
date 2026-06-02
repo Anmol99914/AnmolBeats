@@ -1,9 +1,8 @@
 @php
-    $featuredBeats = App\Models\Beat::with('category')->inRandomOrder()->limit(10)->get();
+$featuredBeats = App\Models\Beat::with('category')->inRandomOrder()->limit(10)->get();
 @endphp
 
-<!-- Pass data through meta tag -->
-<meta id="playerBeatsData" content="{{ base64_encode(json_encode($featuredBeats)) }}">
+<input type="hidden" id="player-beats-data" value="{{ base64_encode(json_encode($featuredBeats)) }}">
 
 <div class="floating-player" id="floatingPlayer">
     <div class="player-container">
@@ -18,7 +17,7 @@
                 <i class="fas fa-step-forward"></i>
             </button>
         </div>
-        
+
         <div class="player-info">
             <div class="track-info">
                 <h6 id="trackTitle">Select a beat</h6>
@@ -28,7 +27,7 @@
                 <button class="btn btn-sm btn-primary" id="addToCartPlayer">Add to Cart</button>
             </div>
         </div>
-        
+
         <div class="player-progress">
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
@@ -42,6 +41,7 @@
 </div>
 
 <style>
+    /* Your existing styles here */
     .floating-player {
         position: fixed;
         bottom: 0;
@@ -56,11 +56,11 @@
         transition: transform 0.3s ease-in-out;
         box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.5);
     }
-    
+
     .floating-player.show {
         transform: translateY(0);
     }
-    
+
     .player-container {
         max-width: 1200px;
         margin: 0 auto;
@@ -69,13 +69,13 @@
         gap: 20px;
         flex-wrap: wrap;
     }
-    
+
     .player-controls {
         display: flex;
         gap: 15px;
         align-items: center;
     }
-    
+
     .player-btn {
         background: transparent;
         border: none;
@@ -90,12 +90,12 @@
         align-items: center;
         justify-content: center;
     }
-    
+
     .player-btn:hover {
         color: #e63946;
         transform: scale(1.1);
     }
-    
+
     .play-pause {
         background: #e63946;
         color: white;
@@ -103,33 +103,33 @@
         height: 50px;
         font-size: 24px;
     }
-    
+
     .play-pause:hover {
         background: #c1121f;
         transform: scale(1.05);
         color: white;
     }
-    
+
     .player-info {
         flex: 1;
         min-width: 200px;
     }
-    
+
     .track-info h6 {
         margin: 0;
         color: white;
     }
-    
+
     .track-info p {
         margin: 0;
         font-size: 12px;
     }
-    
+
     .player-progress {
         min-width: 300px;
         flex: 2;
     }
-    
+
     .progress-bar {
         background: #333;
         height: 4px;
@@ -137,7 +137,7 @@
         cursor: pointer;
         position: relative;
     }
-    
+
     .progress-fill {
         background: #e63946;
         height: 100%;
@@ -145,7 +145,7 @@
         width: 0%;
         transition: width 0.1s linear;
     }
-    
+
     .time-info {
         display: flex;
         justify-content: space-between;
@@ -153,7 +153,7 @@
         font-size: 12px;
         color: #aaa;
     }
-    
+
     .show-player-btn {
         position: fixed;
         bottom: 20px;
@@ -172,33 +172,51 @@
         transition: all 0.3s;
         border: none;
     }
-    
+
     .show-player-btn:hover {
         transform: scale(1.1);
         background: #c1121f;
     }
-    
+
     .show-player-btn i {
         font-size: 24px;
     }
-    
+
     audio::-webkit-media-controls-download-button {
         display: none !important;
     }
-    
+
     audio::-webkit-media-controls-enclosure {
         overflow: hidden;
     }
-    
+
     @media (max-width: 768px) {
         .player-container {
             flex-direction: column;
         }
+
         .player-progress {
             width: 100%;
         }
+
         .track-price {
             margin-top: 10px;
         }
     }
+
+    .fa-spinner {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
 </style>
+
+<script src="{{ asset('js/floating-player.js') }}"></script>

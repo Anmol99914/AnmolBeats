@@ -19,18 +19,45 @@
             </audio>
         </div>
 
-        @auth
-        <form action="{{ route('cart.add', $beat) }}" method="POST" class="mt-4">
-            @csrf
-            <button type="submit" class="btn btn-primary btn-lg w-100">
-                <i class="fas fa-cart-plus"></i> Add to Cart
+        <div class="mt-4 d-flex gap-3">
+            <button class="btn btn-danger btn-lg play-beat-btn" 
+                    data-id="{{ $beat->id }}"
+                    data-title="{{ $beat->title }}"
+                    data-category="{{ $beat->category->name }}"
+                    data-price="{{ $beat->price }}"
+                    data-audio="{{ Storage::url($beat->audio_file) }}">
+                <i class="fas fa-headphones"></i> Play in Floating Player
             </button>
-        </form>
-        @else
-        <div class="alert alert-info mt-4">
-            Please <a href="{{ route('login') }}">login</a> to purchase this beat.
+
+            @auth
+            <form action="{{ route('cart.add', $beat) }}" method="POST" class="flex-grow-1">
+                @csrf
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="fas fa-cart-plus"></i> Add to Cart
+                </button>
+            </form>
+            @else
+            <div class="alert alert-info mt-4">
+                Please <a href="{{ route('login') }}">login</a> to purchase this beat.
+            </div>
+            @endauth
         </div>
-        @endauth
     </div>
 </div>
+
+<script>
+    document.querySelectorAll('.play-beat-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var id = this.dataset.id;
+            var title = this.dataset.title;
+            var category = this.dataset.category;
+            var price = this.dataset.price;
+            var audio = this.dataset.audio;
+            
+            if (typeof playBeat === 'function') {
+                playBeat(id, title, category, price, audio);
+            }
+        });
+    });
+</script>
 @endsection

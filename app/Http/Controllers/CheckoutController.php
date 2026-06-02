@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
+use Stripe\Checkout\Session;
+
 
 class CheckoutController extends Controller
 {
@@ -105,69 +107,69 @@ class CheckoutController extends Controller
 
     public function stripeProcess(Request $request)
     {
-        $request->validate([
-            'payment_method_id' => 'required',
-            'cardholder_name' => 'required'
-        ]);
-        
         $cartItems = Cart::where('user_id', Auth::id())->with('beat')->get();
         
         if ($cartItems->isEmpty()) {
-            return response()->json(['success' => false, 'error' => 'Your cart is empty!']);
+            return redirect()->route('beats.index')->with('error', 'Your cart is empty!');
         }
         
         $total = 0;
         foreach ($cartItems as $item) {
-            $total += $item->beat->price * $item->quantity;
+            $total += $item->beat->price;
         }
         
         Stripe::setApiKey(config('services.stripe.secret'));
         
+        // Create the order FIRST (before Stripe redirect)
+        DB::beginTransaction();
+        
         try {
-            $intent = PaymentIntent::create([
-                'amount' => $total * 100,
-                'currency' => 'usd',
-                'payment_method' => $request->payment_method_id,
-                'confirm' => true,
-                'payment_method_types' => ['card'],
+            $order = Order::create([
+                'user_id' => Auth::id(),
+                'total_amount' => $total,
+                'order_status' => 'pending',
+                'payment_status' => 'pending',
+                'payment_method' => 'stripe'
             ]);
             
-            if ($intent->status === 'succeeded') {
-                DB::beginTransaction();
-                
-                $order = Order::create([
-                    'user_id' => Auth::id(),
-                    'total_amount' => $total,
-                    'order_status' => 'confirmed',
-                    'payment_status' => 'paid',
-                    'payment_method' => 'stripe',
-                    'stripe_charge_id' => $intent->latest_charge, // Save the charge ID
+            foreach ($cartItems as $item) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'beat_id' => $item->beat_id,
+                    'quantity' => 1,
+                    'price' => $item->beat->price
                 ]);
-                session()->flash('just_placed', true);
-
-                foreach ($cartItems as $item) {
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'beat_id' => $item->beat_id,
-                        'quantity' => 1,
-                        'price' => $item->beat->price
-                    ]);
-                }
-                
-                Cart::where('user_id', Auth::id())->delete();
-                
-                DB::commit();
-                
-                return response()->json([
-                    'success' => true, 
-                    'redirect' => route('order.confirmation', $order)
-                ]);
-            } else {
-                return response()->json(['success' => false, 'error' => 'Payment failed.']);
             }
             
+            // Don't delete cart yet - only after successful payment
+            // Store order ID in session for after payment
+            session()->put('pending_order_id', $order->id);
+            
+            DB::commit();
+            
+            // Create Stripe checkout session
+            $checkoutSession = Session::create([
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'usd',
+                        'product_data' => [
+                            'name' => 'Beat Purchase - ' . $cartItems->count() . ' beats',
+                        ],
+                        'unit_amount' => $total * 100,
+                    ],
+                    'quantity' => 1,
+                ]],
+                'mode' => 'payment',
+                'success_url' => route('checkout.stripe.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => route('checkout.stripe'),
+            ]);
+            
+            return redirect($checkoutSession->url);
+            
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+            DB::rollBack();
+            return redirect()->route('checkout.stripe')->with('error', 'Payment setup failed: ' . $e->getMessage());
         }
     }
 }

@@ -1,13 +1,5 @@
 (function() {
-    var playerBeats = [];
-    var beatsMeta = document.getElementById('playerBeatsData');
-    if (beatsMeta) {
-        var beatsData = beatsMeta.getAttribute('content');
-        if (beatsData) {
-            playerBeats = JSON.parse(atob(beatsData));
-        }
-    }
-    
+    var playerBeats = window.playerBeatsData || [];
     var currentIndex = 0;
     var currentAudio = null;
     var isPlaying = false;
@@ -24,6 +16,58 @@
     var durationSpan = document.getElementById('duration');
     var progressBarDiv = document.querySelector('.progress-bar');
     
+    // Function to play a specific beat from anywhere on the page
+    window.playBeat = function(beatId, beatTitle, beatCategory, beatPrice, beatAudioUrl) {
+        // Find beat in playerBeats or create temporary object
+        var beat = playerBeats.find(function(b) { return b.id == beatId; });
+        
+        if (!beat) {
+            beat = {
+                id: beatId,
+                title: beatTitle,
+                category: { name: beatCategory },
+                price: beatPrice,
+                audio_file: beatAudioUrl.replace('/storage/', '')
+            };
+        }
+        
+        // Update player UI
+        trackTitleElem.textContent = beat.title;
+        trackCategoryElem.textContent = beat.category.name;
+        addToCartBtn.setAttribute('data-beat-id', beat.id);
+        
+        // Stop current audio if playing
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+        }
+        
+        // Load new audio
+        var audioUrl = '/storage/' + beat.audio_file;
+        currentAudio = new Audio(audioUrl);
+        currentAudio.setAttribute('controlsList', 'nodownload');
+        addToCartBtn.innerHTML = 'Add to Cart $' + parseFloat(beat.price).toFixed(2);
+        
+        // Set up event listeners
+        currentAudio.addEventListener('timeupdate', updateProgress);
+        currentAudio.addEventListener('loadedmetadata', function() {
+            durationSpan.textContent = formatTime(currentAudio.duration);
+        });
+        currentAudio.addEventListener('ended', function() {
+            nextTrack();
+        });
+        
+        // Play the beat
+        currentAudio.play();
+        isPlaying = true;
+        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        
+        // Show player if hidden
+        if (playerDiv && !playerDiv.classList.contains('show')) {
+            playerDiv.classList.add('show');
+        }
+    };
+    
     function loadTrack(index) {
         if (currentAudio) {
             currentAudio.pause();
@@ -39,9 +83,7 @@
         
         var audioUrl = '/storage/' + beat.audio_file;
         currentAudio = new Audio(audioUrl);
-        if (currentAudio.setAttribute) {
-            currentAudio.setAttribute('controlsList', 'nodownload');
-        }
+        currentAudio.setAttribute('controlsList', 'nodownload');
         addToCartBtn.innerHTML = 'Add to Cart $' + parseFloat(beat.price).toFixed(2);
         
         currentAudio.addEventListener('timeupdate', updateProgress);

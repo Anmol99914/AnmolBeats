@@ -6,6 +6,8 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Order;
+use App\Models\Cart;
 
 Route::get('/check-auth', function () {
     if (Auth::check()) {
@@ -50,7 +52,27 @@ Route::get('/dashboard', function () {
 })->name('dashboard');
 
 Route::get('/checkout/stripe/success', function () {
-    return redirect()->route('orders.history');
+    // Update the pending order to confirmed and paid
+    $orderId = session()->get('pending_order_id');
+    if ($orderId) {
+        $order = Order::find($orderId);
+        if ($order) {
+            $order->update([
+                'order_status' => 'confirmed',
+                'payment_status' => 'paid'
+            ]);
+            
+            // Clear the cart
+            Cart::where('user_id', auth()->id())->delete();
+            
+            // Clear session
+            session()->forget('pending_order_id');
+            
+            return redirect()->route('order.confirmation', $order)->with('success', '✓ Payment successful! Your order has been placed successfully.');
+        }
+    }
+    
+    return redirect()->route('orders.history')->with('success', '✓ Payment successful! Your order has been placed successfully.');
 })->name('checkout.stripe.success');
 
 require __DIR__.'/auth.php';
